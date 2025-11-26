@@ -1,14 +1,13 @@
 """Minimal Flask application setup for the SQLAlchemy assignment."""
 from flask import Flask, jsonify, request
 from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
-
+from models import db,User, Post
 from config import Config
 
 # These extension instances are shared across the app and models
 # so that SQLAlchemy can bind to the application context when the
 # factory runs.
-db = SQLAlchemy()
+
 migrate = Migrate()
 
 
@@ -44,9 +43,18 @@ def create_app(test_config=None):
         TODO: Students should query ``User`` objects, serialize them to JSON,
         and handle incoming POST data to create new users.
         """
+             
+        if request.method == "GET":
+            users = User.query.all()
+            return jsonify([{"id": u.id, "username": u.username} for u in users]), 200
+        
+        data = request.get_json()
+        new_user = User(username=data["username"])
+        db.session.add(new_user)
+        db.session.commit()
 
         return (
-            jsonify({"message": "TODO: implement user listing/creation"}),
+            jsonify({"id": new_user.id, "username": new_user.username}),
             501,
         )
 
@@ -57,9 +65,31 @@ def create_app(test_config=None):
         TODO: Students should query ``Post`` objects, include user data, and
         allow creating posts tied to a valid ``user_id``.
         """
+        if request.method == "GET":
+            posts = Post.query.all()
+            return jsonify([
+                {
+                    "id": p.id,
+                    "title": p.title,
+                    "content": p.content,
+                    "user_id": p.user_id
+                }
+                for p in posts
+            ]), 200
+        
+        data = request.get_json()
+        new_post = Post(
+            title=data["title"],
+            content=data["content"],
+            user_id=data["user_id"]
+        )
+        db.session.add(new_post)
+        db.session.commit()
+
+
 
         return (
-            jsonify({"message": "TODO: implement post listing/creation"}),
+            jsonify({"id": new_post.id, "title": new_post.title}),
             501,
         )
 
